@@ -287,7 +287,6 @@ impl HwDivider {
 }
 
 intrinsics! {
-    #[aeabi = __aeabi_uidiv]
     extern "C" fn __udivsi3(n: u32, d: u32) -> u32 {
         divider_unsigned(n, d).quotient
     }
@@ -304,7 +303,6 @@ intrinsics! {
         quo_rem.quotient
     }
 
-    #[aeabi = __aeabi_idiv]
     extern "C" fn __divsi3(n: i32, d: i32) -> i32 {
         divider_signed(n, d).quotient
     }
@@ -317,6 +315,28 @@ intrinsics! {
         let quo_rem = divider_signed(n, d);
         *rem = quo_rem.remainder;
         quo_rem.quotient
+    }
+
+    // The aeabi_[u]idivmod functions are defined to return the quotient in r0
+    // and the remainder in r1.  Normally this would require some assembler
+    // to guarantee, but since they're also AAPCS ABI functions, we can take
+    // advantage of how AAPCS defines a 64-bit return on 32-bit registers by
+    // packing it into r0[0:31] and r1[32:63].  So all we need to do is put
+    // the remainder in the high order 32 bits of a 64 bit result.  We can
+    // also alias the division operators to these for a similar reason: r0
+    // is the result either way and r1 a scratch register, so the caller can't
+    // assume it retains the argument value.
+    #[aeabi = __aeabi_uidiv]
+    extern "aapcs" fn __aeabi_uidivmod(n: u32, d: u32) -> u64 {
+        let quo_rem = divider_unsigned(n, d);
+        (quo_rem.quotient as u64) | ((quo_rem.remainder as u64) << 32)
+    }
+
+    #[aeabi = __aeabi_idiv]
+    extern "aapcs" fn __aeabi_idivmod(n: i32, d: i32) -> u64 {
+        let quo_rem = divider_signed(n, d);
+        // Need a double cast to avoid sign extension
+        (quo_rem.quotient as u32 as u64) | ((quo_rem.remainder as u32 as u64) << 32)
     }
 }
 
