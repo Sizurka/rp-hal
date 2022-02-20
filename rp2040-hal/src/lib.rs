@@ -7,6 +7,8 @@
 #![no_std]
 #![cfg_attr(feature = "embassy-traits", feature(generic_associated_types))]
 #![cfg_attr(feature = "embassy-traits", feature(type_alias_impl_trait))]
+#![feature(naked_functions)]
+#![feature(asm_const)]
 
 extern crate cortex_m;
 extern crate embedded_hal as hal;
