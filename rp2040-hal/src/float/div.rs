@@ -9,14 +9,14 @@ trait ROMDiv {
 impl ROMDiv for f32 {
     fn rom_div(self, b: Self) -> Self {
         // ROM implementation uses the hardware divider, so we have to save it
-        save_divider(|_sio| rom_data::float_funcs::fdiv(self, b))
+        save_divider(|| rom_data::float_funcs::fdiv(self, b))
     }
 }
 
 impl ROMDiv for f64 {
     fn rom_div(self, b: Self) -> Self {
         // ROM implementation uses the hardware divider, so we have to save it
-        save_divider(|_sio| rom_data::double_funcs::ddiv(self, b))
+        save_divider(|| rom_data::double_funcs::ddiv(self, b))
     }
 }
 
