@@ -223,17 +223,24 @@ where
 
 // Don't use cortex_m::asm::delay(8) because that ends up delaying 15 cycles
 // on Cortex-M0.  Each iteration of the inner loop is 3 cycles and it adds
-// one extra iteration.
+// one extra iteration.  Additionally cortex_m::asm::nop() has a tendency to
+// not actually generate an inlined nop (instead making a branch to a nop), so
+// just do the delay here directly.
 #[inline(always)]
 fn divider_delay() {
-    cortex_m::asm::nop();
-    cortex_m::asm::nop();
-    cortex_m::asm::nop();
-    cortex_m::asm::nop();
-    cortex_m::asm::nop();
-    cortex_m::asm::nop();
-    cortex_m::asm::nop();
-    cortex_m::asm::nop();
+    unsafe {
+        core::arch::asm!(
+            "nop",
+            "nop",
+            "nop",
+            "nop",
+            "nop",
+            "nop",
+            "nop",
+            "nop",
+            options(nomem, nostack, preserves_flags),
+        );
+    }
 }
 
 fn divider_unsigned(dividend: u32, divisor: u32) -> DivResult<u32> {
